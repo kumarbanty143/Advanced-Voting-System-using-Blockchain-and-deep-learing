@@ -1,0 +1,23 @@
+{
+  "name": "advanced-voting-system-using-blockchain-and-deep-learing",
+  "version": "1.0.0",
+  "description": "Root Directory Structure",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kumarbanty143/Advanced-Voting-System-using-Blockchain-and-deep-learing.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kumarbanty143/Advanced-Voting-System-using-Blockchain-and-deep-learing/issues"
+  },
+  "homepage": "https://github.com/kumarbanty143/Advanced-Voting-System-using-Blockchain-and-deep-learing#readme",
+  "devDependencies": {
+    "tailwindcss": "^4.0.17"
+  }
+}
