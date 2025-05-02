@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import axios from 'axios';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -25,6 +26,7 @@ export default function Register() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    console.log(`Field ${name} updated: ${value}`); // Debug log
     setFormData(prevData => ({
       ...prevData,
       [name]: value
@@ -32,6 +34,8 @@ export default function Register() {
   };
 
   const validateForm = () => {
+    console.log("Validating form data:", formData); // Debug log
+
     if (!formData.name || !formData.email || !formData.voterId || !formData.aadhaarId || !formData.password) {
       toast({
         variant: "destructive",
@@ -40,7 +44,7 @@ export default function Register() {
       });
       return false;
     }
-    
+
     if (formData.aadhaarId.length !== 12 || !/^\d+$/.test(formData.aadhaarId)) {
       toast({
         variant: "destructive",
@@ -49,7 +53,7 @@ export default function Register() {
       });
       return false;
     }
-    
+
     if (formData.password.length < 8) {
       toast({
         variant: "destructive",
@@ -58,7 +62,7 @@ export default function Register() {
       });
       return false;
     }
-    
+
     if (formData.password !== formData.confirmPassword) {
       toast({
         variant: "destructive",
@@ -67,17 +71,20 @@ export default function Register() {
       });
       return false;
     }
-    
+
+    console.log("Form validation passed"); // Debug log
     return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+    console.log("Form submitted"); // Debug log
+
     if (!validateForm()) return;
-    
+
     try {
       setIsLoading(true);
+      console.log("Using context register function"); // Debug log
       await register({
         name: formData.name,
         email: formData.email,
@@ -85,14 +92,15 @@ export default function Register() {
         aadhaarId: formData.aadhaarId,
         password: formData.password
       });
-      
+
       toast({
         title: "Registration successful",
         description: "You can now log in with your credentials",
       });
-      
+
       navigate('/login');
     } catch (err) {
+      console.error("Registration error:", err); // Debug log
       toast({
         variant: "destructive",
         title: "Registration failed",
@@ -102,7 +110,99 @@ export default function Register() {
       setIsLoading(false);
     }
   };
-  
+
+  // Direct registration test
+  const testDirectRegistration = async () => {
+    if (!validateForm()) return;
+
+    try {
+      setIsLoading(true);
+      console.log("Testing direct API registration"); // Debug log
+
+      const userData = {
+        name: formData.name,
+        email: formData.email,
+        voterId: formData.voterId,
+        aadhaarId: formData.aadhaarId,
+        password: formData.password
+      };
+
+      console.log("Registration data:", userData); // Debug log
+
+      // Use direct axios call with port 5001
+      const response = await axios.post('http://localhost:5001/api/auth/register', userData);
+
+      console.log("Registration response:", response.data); // Debug log
+
+      toast({
+        title: "Registration successful",
+        description: "Direct API registration worked! You can now log in.",
+      });
+
+      navigate('/login');
+    } catch (err) {
+      console.error("Direct registration error:", err); // Debug log
+      toast({
+        variant: "destructive",
+        title: "Direct registration failed",
+        description: err.response?.data?.message || "API error",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch API registration test
+  const testFetchRegistration = async () => {
+    if (!validateForm()) return;
+
+    try {
+      setIsLoading(true);
+      console.log("Testing Fetch API registration"); // Debug log
+
+      const userData = {
+        name: formData.name,
+        email: formData.email,
+        voterId: formData.voterId,
+        aadhaarId: formData.aadhaarId,
+        password: formData.password
+      };
+
+      console.log("Registration data:", userData); // Debug log
+
+      const response = await fetch('http://localhost:5001/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+
+      const data = await response.json();
+      console.log("Fetch registration response:", data); // Debug log
+
+      if (response.ok) {
+        toast({
+          title: "Registration successful",
+          description: "Fetch API registration worked! You can now log in.",
+        });
+
+        navigate('/login');
+      } else {
+        throw new Error(data.message || "Registration failed");
+      }
+    } catch (err) {
+      console.error("Fetch registration error:", err); // Debug log
+      toast({
+        variant: "destructive",
+        title: "Fetch registration failed",
+        description: err.message || "API error",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="flex justify-center items-center py-8">
       <Card className="w-full max-w-lg">
@@ -120,7 +220,7 @@ export default function Register() {
                 <span>{error}</span>
               </div>
             )}
-            
+
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
               <Input
@@ -132,7 +232,7 @@ export default function Register() {
                 required
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -145,7 +245,7 @@ export default function Register() {
                 required
               />
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="voterId">Voter ID</Label>
@@ -158,7 +258,7 @@ export default function Register() {
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="aadhaarId">Aadhaar Number</Label>
                 <Input
@@ -174,7 +274,7 @@ export default function Register() {
                 </p>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
@@ -191,7 +291,7 @@ export default function Register() {
                   Must be at least 8 characters
                 </p>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
                 <Input
@@ -205,8 +305,8 @@ export default function Register() {
                 />
               </div>
             </div>
-            
-            <div className="pt-2">
+
+            <div className="pt-2 space-y-2">
               <Button
                 type="submit"
                 className="w-full"
@@ -214,6 +314,29 @@ export default function Register() {
               >
                 {isLoading ? "Creating account..." : "Register"}
               </Button>
+
+              {/* Test buttons for debugging */}
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={testDirectRegistration}
+                  disabled={isLoading}
+                >
+                  Test Axios
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={testFetchRegistration}
+                  disabled={isLoading}
+                >
+                  Test Fetch
+                </Button>
+              </div>
             </div>
           </form>
         </CardContent>

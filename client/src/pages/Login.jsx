@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import axios from 'axios';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -19,7 +20,7 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       toast({
         variant: "destructive",
@@ -28,22 +29,116 @@ export default function Login() {
       });
       return;
     }
-    
+
     try {
       setIsLoading(true);
-      await login(email, password);
+      console.log('Login Attempt Details:', {
+        email,
+        passwordLength: password.length,
+        passwordType: typeof password
+      });
+
+      const loginResult = await login({ email, password });
+      console.log('Complete Login Result:', loginResult);
       navigate('/');
     } catch (err) {
+      console.error('Comprehensive Login Error:', {
+        name: err.name,
+        message: err.message,
+        stack: err.stack,
+        response: err.response?.data,
+        status: err.response?.status
+      });
+
       toast({
         variant: "destructive",
-        title: "Login failed",
-        description: err.response?.data?.message || "Invalid credentials",
+        title: "Login Failed",
+        description: err.response?.data?.message || err.message || "Unknown error occurred",
       });
     } finally {
       setIsLoading(false);
     }
   };
-  
+
+  // Direct login test function
+  const testDirectLogin = async () => {
+    try {
+      setIsLoading(true);
+      console.log('Testing direct login with axios');
+
+      const response = await axios.post('http://localhost:5001/api/auth/login', {
+        email,
+        password
+      });
+
+      console.log('Direct login response:', response.data);
+
+      if (response.data.token) {
+        // Store token and user data
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+
+        toast({
+          title: "Direct login successful",
+          description: "Login worked via direct API call",
+        });
+
+        navigate('/');
+      }
+    } catch (err) {
+      console.error('Direct login error:', err);
+      toast({
+        variant: "destructive",
+        title: "Direct login failed",
+        description: err.response?.data?.message || "API error",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch API login test
+  const testFetchLogin = async () => {
+    try {
+      setIsLoading(true);
+      console.log('Testing fetch login with correct port');
+
+      const response = await fetch('http://localhost:5001/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+      console.log('Fetch login response:', data);
+
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        toast({
+          title: "Fetch login successful",
+          description: "Login worked via Fetch API",
+        });
+
+        navigate('/');
+      } else {
+        throw new Error(data.message || 'Login failed');
+      }
+    } catch (err) {
+      console.error('Fetch login error:', err);
+      toast({
+        variant: "destructive",
+        title: "Fetch login failed",
+        description: err.message || "API error",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="flex justify-center items-center min-h-[80vh]">
       <Card className="w-full max-w-md">
@@ -61,7 +156,7 @@ export default function Login() {
                 <span>{error}</span>
               </div>
             )}
-            
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -73,12 +168,12 @@ export default function Login() {
                 required
               />
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <Link 
-                  to="/forgot-password" 
+                <Link
+                  to="/forgot-password"
                   className="text-xs text-blue-600 hover:underline"
                 >
                   Forgot Password?
@@ -93,14 +188,39 @@ export default function Login() {
                 required
               />
             </div>
-            
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading ? "Logging in..." : "Login"}
-            </Button>
+
+            <div className="space-y-2">
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading}
+              >
+                {isLoading ? "Logging in..." : "Login"}
+              </Button>
+
+              {/* Test buttons for debugging */}
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={testDirectLogin}
+                  disabled={isLoading}
+                >
+                  Test Axios
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={testFetchLogin}
+                  disabled={isLoading}
+                >
+                  Test Fetch
+                </Button>
+              </div>
+            </div>
           </form>
         </CardContent>
         <CardFooter className="flex justify-center border-t p-4">

@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Create an axios instance with default config
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5001/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -15,7 +15,7 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers.Authorization = token;
     }
     return config;
   },
@@ -38,8 +38,37 @@ api.interceptors.response.use(
       window.location.href = '/login';
     }
     
+    // Log API errors for debugging
+    console.error('API Error:', error.response?.data || error.message);
+    
     return Promise.reject(error);
   }
 );
+
+// Auth API methods
+api.auth = {
+  register: (userData) => api.post('/auth/register', userData),
+  login: (credentials) => api.post('/auth/login', credentials),
+  verify: () => api.get('/auth/verify')
+};
+
+// Voter API methods
+api.voters = {
+  profile: () => api.get('/voters/profile'),
+  registerFace: (faceData) => {
+    const formData = new FormData();
+    formData.append('face', faceData);
+    return api.post('/voters/register-face', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+  verifyFace: (faceData) => {
+    const formData = new FormData();
+    formData.append('face', faceData);
+    return api.post('/voters/verify-face', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  }
+};
 
 export default api;
